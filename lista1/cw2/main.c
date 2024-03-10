@@ -52,7 +52,8 @@ int main() {
   return 0;
 }
 
-static bool isPrefix(const char str[static 1], const char target[static 1]) {
+static bool isPrefix(const char str[const static 1],
+                     const char target[const static 1]) {
   // Contract check
   if (str == NULL || target == NULL) {
     perror("isPrefix: str or target is NULL");
