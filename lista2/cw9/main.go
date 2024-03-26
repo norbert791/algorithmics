@@ -2,53 +2,6 @@ package main
 
 import "fmt"
 
-const startSeq = "ATG"
-
-// suffixState has complexity O(1) and returns the next state of the suffix automaton.
-func suffixState(r rune, state string) string {
-	switch r {
-	case 'T':
-		if state == "" {
-			return "T"
-		}
-	case 'A':
-		if state == "T" {
-			return "TA"
-		}
-		if state == "TG" {
-			return "0"
-		}
-		if state == "TA" {
-			return "0"
-		}
-	case 'G':
-		if state == "T" {
-			return "TG"
-		}
-		if state == "TA" {
-			return "0"
-		}
-	default:
-		return ""
-	}
-
-	return ""
-}
-
-// interfixState has complexity O(1) and returns the next state of the interfix automaton.
-func interfixState(r rune, state string) string {
-	switch {
-	case r == 'A' && state == "":
-		return "A"
-	case r == 'T' && state == "A":
-		return "AT"
-	case r == 'G' && state == "AT":
-		return "0"
-	}
-
-	return ""
-}
-
 type Match struct {
 	Index   int
 	Matched string
@@ -107,10 +60,11 @@ func findSubstrings(config *Config, str string) []Match {
 
 	for i+3 <= len(str) {
 		subStr := str[i : i+3]
-		fmt.Println(state, moveCounter)
+		// fmt.Println(state, moveCounter)
 		switch state {
 		case findPrefix:
 			if _, ok := start[subStr]; ok {
+				fmt.Printf("Found prefix: %s at %d\n", subStr, i)
 				state = move
 				matchStart = i
 				// Reset moveCounter. Since find Prefix matches XYZ, we need to subtract (YZ)'s length from the counter.
@@ -118,22 +72,23 @@ func findSubstrings(config *Config, str string) []Match {
 			}
 			i++
 		case move:
-			if _, ok := banned[subStr]; ok {
-				state = findPrefix
-				break
-			}
 			if moveCounter == interfixLength {
 				state = findSuffix
+				break
+			}
+			if _, ok := banned[subStr]; ok {
+				state = findPrefix
 				break
 			}
 			i++
 			moveCounter++
 		case findSuffix:
-			if _, ok := banned[subStr]; ok {
-				state = findPrefix
-			}
 			if _, ok := fin[subStr]; ok {
 				matches = append(matches, Match{matchStart, str[matchStart : i+3]})
+			} else if _, ok := banned[subStr]; ok {
+				fmt.Printf("Banned: %s at %d\n", subStr, i)
+				state = findPrefix
+				break
 			}
 			i++
 		default:
@@ -144,9 +99,25 @@ func findSubstrings(config *Config, str string) []Match {
 }
 
 func main() {
+	fmt.Println("Example 1")
 	sampleString := "TAACGYTAATGCCCCCCTAGATGCCCCCCCTTTTTTTTTCAAAAAAACGGGGGGGGTGAAAAAAAA"
 	matches := findSubstrings(nil, sampleString)
 
+	for _, match := range matches {
+		fmt.Printf("Matched: %s at index %d\n", match.Matched, match.Index)
+	}
+
+	// Examples ~Joanna Kulig
+	fmt.Println("Example 2")
+	sampleString = "ATGCACGTCCAACAAACATCAAAACAAAAAAAATAACTTTGATAATGCACGGTCCACAAACTCAAGGCAACAAAAAACTGA"
+	matches = findSubstrings(nil, sampleString)
+	for _, match := range matches {
+		fmt.Printf("Matched: %s at index %d\n", match.Matched, match.Index)
+	}
+
+	fmt.Println("Example 3")
+	sampleString = "ATGCCAAAAAAAAATGCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCTAA"
+	matches = findSubstrings(nil, sampleString)
 	for _, match := range matches {
 		fmt.Printf("Matched: %s at index %d\n", match.Matched, match.Index)
 	}
