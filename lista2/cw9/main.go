@@ -30,6 +30,23 @@ func DefaultConfig() *Config {
 
 }
 
+func (c *Config) VerifyTail(moveCounter int, str string, index int, matchStart int) *Match {
+	j := index + 1
+	if j+3 <= len(str) {
+		if _, ok := c.Suffix[str[j:j+3]]; ok && moveCounter+1 >= c.InterfixLength {
+			return &Match{matchStart, str[matchStart : index+3]}
+		}
+	}
+	j = index + 2
+	if j+3 <= len(str) {
+		if _, ok := c.Suffix[str[j:j+3]]; ok && moveCounter+2 >= c.InterfixLength {
+			return &Match{matchStart, str[matchStart : index+3]}
+		}
+	}
+
+	return nil
+}
+
 func findSubstrings(config *Config, str string) []Match {
 	if config == nil {
 		config = DefaultConfig()
@@ -74,6 +91,12 @@ func findSubstrings(config *Config, str string) []Match {
 			_, ok1 := start[subStr]
 			_, ok2 := fin[subStr]
 			if ok1 || ok2 {
+				if ok2 {
+					m := config.VerifyTail(moveCounter, str, i, matchStart)
+					if m != nil {
+						matches = append(matches, *m)
+					}
+				}
 				state = findPrefix
 				break
 			}
@@ -86,6 +109,11 @@ func findSubstrings(config *Config, str string) []Match {
 				state = findPrefix
 				break
 			} else if _, ok := start[subStr]; ok {
+				m := config.VerifyTail(moveCounter, str, i, matchStart)
+				if m != nil {
+					matches = append(matches, *m)
+
+				}
 				state = findPrefix
 				break
 			}
@@ -116,6 +144,13 @@ func main() {
 
 	fmt.Println("Example 3")
 	sampleString = "ATGCCAAAAAAAAATGCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCTAA"
+	matches = findSubstrings(nil, sampleString)
+	for _, match := range matches {
+		fmt.Printf("Matched: %s at index %d\n", match.Matched, match.Index)
+	}
+
+	fmt.Println("Example 4")
+	sampleString = "ATGCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCATGA"
 	matches = findSubstrings(nil, sampleString)
 	for _, match := range matches {
 		fmt.Printf("Matched: %s at index %d\n", match.Matched, match.Index)
