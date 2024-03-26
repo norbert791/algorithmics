@@ -12,7 +12,6 @@ type Match struct {
 type Config struct {
 	Preffix        map[string]struct{}
 	InterfixLength int
-	InterfixBanned map[string]struct{}
 	Suffix         map[string]struct{}
 }
 
@@ -22,10 +21,6 @@ func DefaultConfig() *Config {
 			"ATG": {},
 		},
 		InterfixLength: 30,
-		InterfixBanned: map[string]struct{}{
-			"ATG": {},
-			"TAA": {}, "TAG": {}, "TGA": {},
-		},
 		Suffix: map[string]struct{}{
 			"TAA": {},
 			"TAG": {},
@@ -41,7 +36,6 @@ func findSubstrings(config *Config, str string) []Match {
 	}
 	var matches []Match
 
-	banned := config.InterfixBanned
 	fin := config.Suffix
 	start := config.Preffix
 	interfixLength := config.InterfixLength
@@ -64,7 +58,6 @@ func findSubstrings(config *Config, str string) []Match {
 		switch state {
 		case findPrefix:
 			if _, ok := start[subStr]; ok {
-				fmt.Printf("Found prefix: %s at %d\n", subStr, i)
 				state = move
 				matchStart = i
 				// Reset moveCounter. Since find Prefix matches XYZ, we need to subtract (YZ)'s length from the counter.
@@ -72,21 +65,27 @@ func findSubstrings(config *Config, str string) []Match {
 			}
 			i++
 		case move:
+			switch {
+			}
 			if moveCounter == interfixLength {
 				state = findSuffix
 				break
 			}
-			if _, ok := banned[subStr]; ok {
+			_, ok1 := start[subStr]
+			_, ok2 := fin[subStr]
+			if ok1 || ok2 {
 				state = findPrefix
 				break
 			}
+
 			i++
 			moveCounter++
 		case findSuffix:
 			if _, ok := fin[subStr]; ok {
 				matches = append(matches, Match{matchStart, str[matchStart : i+3]})
-			} else if _, ok := banned[subStr]; ok {
-				fmt.Printf("Banned: %s at %d\n", subStr, i)
+				state = findPrefix
+				break
+			} else if _, ok := start[subStr]; ok {
 				state = findPrefix
 				break
 			}
