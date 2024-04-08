@@ -36,6 +36,24 @@ type Graph struct {
 	Vertices map[uint]Vertex
 }
 
+func (g *Graph) Copy() *Graph {
+	newVertices := make(map[uint]Vertex, len(g.Vertices))
+	for key, vertex := range g.Vertices {
+		newVertices[key] = make(Vertex, len(vertex))
+		for v := range vertex {
+			newVertices[key][v] = struct{}{}
+		}
+	}
+
+	newEdges := make([]Edge, len(g.Edges))
+	copy(newEdges, g.Edges)
+
+	return &Graph{
+		Edges:    newEdges,
+		Vertices: newVertices,
+	}
+}
+
 // KargerMinCut returns the minimum cut of the graph using the Karger's algorithm.
 // Note: It modifies the graph in place.
 func (g *Graph) KargerMinCut() []Edge {
@@ -67,6 +85,21 @@ func (g *Graph) KargerMinCut() []Edge {
 	}
 
 	return g.Edges
+}
+
+// MinCut returns the minimum cut of the graph by running KargerMinCut n times.
+func (g *Graph) MinCut(n uint) []Edge {
+	var result []Edge
+
+	for range n {
+		gCopy := g.Copy()
+		cut := gCopy.KargerMinCut()
+		if result == nil || len(cut) < len(result) {
+			result = cut
+		}
+	}
+
+	return result
 }
 
 func MapToGraph(m map[uint][]uint) *Graph {
@@ -103,7 +136,7 @@ func main() {
 
 	g := MapToGraph(graph)
 
-	sol := g.KargerMinCut()
+	sol := g.MinCut(uint(len(graph)))
 
 	fmt.Printf("Minimum cut of size %d found: %v\n", len(sol), sol)
 }

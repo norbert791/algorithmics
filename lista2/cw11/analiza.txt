@@ -1,0 +1,11 @@
+Weźmy dowolny graf prosty o n wierzchołkach i minimalnym cięciu rozmiaru m krawędzi.
+Wtedy stopień każdego wierzchołka >= m.
+Wtedy z lematu Eulera graf ma co najmniej (1/2) * sum{i <= n} deg(v_i) == (1/2) * sum{1 <= n} m = n * m / 2 krawędzi.
+Stąd szansa na wylosowanie, z rozkładem jednostajnym, krawędzi z minimalnego cięcia wynosi m / (n* m / 2) = 2/n.
+
+Ponieważ algorytm wykonuje n - 2 kontrakcji krawędzi, to prawdopodobieństwo nie wybrania żadnej krawędzi z minimalnego
+cięcia po n - 2 iteracjach wynosi (1 - 2/n)(1-2/(n-1))...(1-2/(1/3)) = 2/(n(n-1))
+
+Stąd pstwo. sukcesu dla pojedynczego uruchomienia procedur >= 2/n^2. Zatem dla wysokiego pstwa. wyniku powinniśmy ją uruchomić Omega(n^2) razy
+Zgodnie z rozkładem dwumianowym dla t prób pstwo pojedynczego sukcesu wynosi Newton(t, 1)(2/n^2)^1(1-(2/n^2))^(t-1) = 
+= (t*2*(1-(2/n^2))^t) / (n^2(1-(2/n^2)))
