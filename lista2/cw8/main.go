@@ -63,7 +63,7 @@ func lcsEXP(length int, numOfWorkers int) float64 {
 		result += r
 	}
 
-	numOfPairs := 2 << (length * 2)
+	numOfPairs := 1 << (length * 2)
 
 	return float64(result) / float64(numOfPairs)
 }
