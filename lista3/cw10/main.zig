@@ -33,7 +33,8 @@ fn Array3D(comptime T: type) type {
         }
     };
 }
-fn lcsForThree(comptime T: type, allocator: std.mem.Allocator, s1: []const T, s2: []const T, s3: []const T) !usize {
+fn lcsForThree(comptime T: type, allocator: std.mem.Allocator, s1: []const T, s2: []const T, s3: []const T) ![]T {
+    // Generate subproblems' array
     var array = try Array3D(usize).init(allocator, s1.len + 1, s2.len + 1, s3.len + 1);
     defer array.deinit();
 
@@ -53,7 +54,42 @@ fn lcsForThree(comptime T: type, allocator: std.mem.Allocator, s1: []const T, s2
             }
         }
     }
-    return array.get(s1.len, s2.len, s3.len);
+
+    // Reconstruct the LCS
+    var result = try allocator.alloc(T, array.get(s1.len, s2.len, s3.len));
+    errdefer allocator.free(result);
+    var i, var j, var k = .{ s1.len, s2.len, s3.len };
+    var resultLen: usize = 0;
+    while (i > 0 and j > 0 and k > 0) {
+        const a = array.get(i - 1, j, k);
+        const b = array.get(i, j - 1, k);
+        const c = array.get(i, j, k - 1);
+
+        const max = @max(@max(a, b), c);
+        const addChar = max != array.get(i, j, k);
+        if (a == max) {
+            i -= 1;
+            if (addChar) {
+                result[resultLen] = s1[i];
+                resultLen += 1;
+            }
+        } else if (b == max) {
+            j -= 1;
+            if (addChar) {
+                result[resultLen] = s2[j];
+                resultLen += 1;
+            }
+        } else if (c == max) {
+            k -= 1;
+            if (addChar) {
+                result[resultLen] = s3[k];
+                resultLen += 1;
+            }
+        }
+    }
+    std.mem.reverse(T, result);
+
+    return result;
 }
 
 pub fn main() !void {
@@ -65,9 +101,11 @@ pub fn main() !void {
             @panic("Memory leak detected.\n");
         }
     }
-    const s1: []const u8 = "AGGT12";
-    const s2: []const u8 = "12TXAY";
-    const s3: []const u8 = "12XBA";
+    const s1: []const u8 = "AGGT12T";
+    const s2: []const u8 = "12TXTAY";
+    const s3: []const u8 = "12XBATT";
     const result = try lcsForThree(u8, alc, s1, s2, s3);
-    std.debug.print("Length of LCS is: {}\n", .{result});
+    defer alc.free(result);
+    std.debug.print("LCS: {s}\n", .{result});
+    std.debug.print("LCS's length: {}\n", .{result.len});
 }
