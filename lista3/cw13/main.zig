@@ -95,7 +95,7 @@ fn monteCarloAntithetic(n: u16) f64 {
     return monteCarloAntitheticPriv(0, 1, n, 1.0, foo);
 }
 
-pub fn main() void {
+pub fn main() !void {
     rng = std.rand.Xoroshiro128.init(seed: {
         var s: u64 = 0;
         std.posix.getrandom(std.mem.asBytes(&s)) catch |err| {
