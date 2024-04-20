@@ -37,20 +37,20 @@ fn lcsForThree(comptime T: type, allocator: std.mem.Allocator, s1: []const T, s2
     var array = try Array3D(usize).init(allocator, s1.len + 1, s2.len + 1, s3.len + 1);
     defer array.deinit();
 
-    for (s1, 0..) |_, i| {
-        for (s2, 0..) |_, j| {
-            for (s3, 0..) |_, k|
+    for (0..s1.len + 1) |i| {
+        for (0..s2.len + 1) |j| {
+            for (0..s3.len + 1) |k| {
                 if (i == 0 or j == 0 or k == 0) {
                     array.set(i, j, k, 0);
                 } else if (s1[i - 1] == s2[j - 1] and s2[j - 1] == s3[k - 1]) {
                     array.set(i, j, k, array.get(i - 1, j - 1, k - 1) + 1);
                 } else {
-                    array.set(i, j, k, @max(@max(array.get(i - 1, j, k), array.get(i, j - 1, k)), array.get(i, j, k - 1)));
                     const a = array.get(i - 1, j, k);
                     const b = array.get(i, j - 1, k);
                     const c = array.get(i, j, k - 1);
                     array.set(i, j, k, @max(@max(a, b), c));
-                };
+                }
+            }
         }
     }
     return array.get(s1.len, s2.len, s3.len);
