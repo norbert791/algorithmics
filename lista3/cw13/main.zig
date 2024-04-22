@@ -6,7 +6,7 @@ fn foo(x: f64) f64 {
     return @sqrt(1.0 - x * x);
 }
 
-fn monteCarloPriv(a: f64, b: f64, n: u16, bound: f64, f: *const fn (f64) f64) [2]f64 {
+fn monteCarloPriv(a: f64, b: f64, n: u16, bound: f64, f: *const fn (f64) f64) f64 {
     var hit: u64 = 0;
     var all: u64 = 0;
 
@@ -23,43 +23,24 @@ fn monteCarloPriv(a: f64, b: f64, n: u16, bound: f64, f: *const fn (f64) f64) [2
     res /= @floatFromInt(all);
     res *= (b - a) * bound;
 
-    // TODO: Is this correct?
-
-    var variance = res * (1.0 - res);
-    variance /= @floatFromInt(all);
-
-    return .{ res, variance };
+    return res;
 }
 
-fn monteCarloStratifiedPriv(a: f64, b: f64, n: u16, bound: f64, eps: f64, maxDepth: u16, f: *const fn (f64) f64) [2]f64 {
-    if (n < 4) {
-        return .{ 0.0, 0.0 };
-    }
+fn monteCarloStratifiedPriv(a: f64, b: f64, n: u16, bound: f64, f: *const fn (f64) f64) f64 {
     const mid = (a + b) / 2.0;
-    const newN = n / 2;
 
-    const res1 = monteCarloPriv(a, mid, newN, bound, f);
-    const res2 = monteCarloPriv(mid, b, newN, bound, f);
+    const resLeft = monteCarloPriv(a, mid, n / 2, bound, f);
+    const resRight = monteCarloPriv(mid, b, n / 2, bound, f);
 
-    const value = (res1[0] + res2[0]);
-    const variance = (res1[1] + res2[1]) / 2.0;
-
-    if (maxDepth == 0 or @abs(res1[1] - res2[1]) < eps or n < 4) {
-        return .{ value, variance };
-    }
-
-    const res3 = monteCarloStratifiedPriv(a, mid, newN, bound, eps / 2.0, maxDepth - 1, f);
-    const res4 = monteCarloStratifiedPriv(mid, b, newN, bound, eps / 2.0, maxDepth - 1, f);
-
-    return .{ res3[0] + res4[0], res3[1] + res4[1] };
+    return resLeft + resRight;
 }
 
-fn monteCarloStratified(n: u16, eps: f64, maxDepth: u16) f64 {
-    return monteCarloStratifiedPriv(0, 1, n, 1.0, eps, maxDepth, foo)[0];
+fn monteCarloStratified(n: u16) f64 {
+    return monteCarloStratifiedPriv(0, 1, n, 1.0, foo);
 }
 
 fn monteCarloSimple(n: u16) f64 {
-    return monteCarloPriv(0, 1, n, 1.0, foo)[0];
+    return monteCarloPriv(0, 1, n, 1.0, foo);
 }
 
 fn monteCarloAntitheticPriv(a: f64, b: f64, n: u16, bound: f64, f: *const fn (f64) f64) f64 {
@@ -104,14 +85,23 @@ pub fn main() !void {
         break :seed s;
     });
     const n = 1000;
-    const eps = 0.0001;
-    const maxDepth = 10;
 
-    const resStrat = monteCarloStratified(n, eps, maxDepth);
-    const resSimple = monteCarloSimple(n);
-    const resAntithetic = monteCarloAntithetic(n);
+    const numOfRuns = 10_000;
 
-    std.debug.print("Result for simple: {}\n", .{resSimple});
-    std.debug.print("Result for stratified: {}\n", .{resStrat});
-    std.debug.print("Result for antithetic: {}\n", .{resAntithetic});
+    const expResult = std.math.pi / 4.0;
+    var resStrat: f64 = 0.0;
+    var resSimple: f64 = 0.0;
+    var resAntithetic: f64 = 0.0;
+    for (0..numOfRuns) |_| {
+        resStrat += @abs(monteCarloStratified(n) - expResult);
+        resSimple += @abs(monteCarloSimple(n) - expResult);
+        resAntithetic += @abs(monteCarloAntithetic(n) - expResult);
+    }
+    resStrat /= @floatFromInt(numOfRuns);
+    resSimple /= @floatFromInt(numOfRuns);
+    resAntithetic /= @floatFromInt(numOfRuns);
+
+    std.debug.print("Avg Result err for simple: {}\n", .{resSimple});
+    std.debug.print("Avg Result err for stratified: {}\n", .{resStrat});
+    std.debug.print("Avg Result err for antithetic: {}\n", .{resAntithetic});
 }
