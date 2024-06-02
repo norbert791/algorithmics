@@ -1,24 +1,34 @@
 #!/usr/bin/env python3
 
-from random import random
+from random import randrange
 import matplotlib.pyplot as plt
 
 if __name__ == "__main__":
-    maxNumOfStations = int(1e4)
-    results = [0] * maxNumOfStations
-    for i in range(1, int(maxNumOfStations) + 1):
-        if i <= 400:
-            results[i - 1] = i
-        else:
-            randStations = list(map(lambda _: random(), range(maxNumOfStations)))
-            randStations.sort()
-            results[i - 1] = 399 / randStations[399]
+    numOfBalls = int(1e6)
+    numOfBins = int(1e3)
+    bins = [0] * numOfBins
+    for i in range(numOfBalls):
+        bins[randrange(numOfBins)] += 1
 
-    for i in range(maxNumOfStations):
-        exactResult = i + 1
-        results[i] = abs(exactResult - results[i]) / exactResult
-    plt.plot(range(1, len(results) + 1), results)
-    plt.xlabel("Num of stations")
-    plt.ylabel("Result relative err")
-    plt.title("Relative error of the result")
-    plt.show()
+    plt.bar(range(numOfBins), bins)
+    plt.xlabel("Bin")
+    plt.ylabel("Number of Balls")
+    plt.title("Distribution of Balls in Bins")
+    plt.savefig("uniform.png")
+    plt.close()
+
+    bins = [0] * numOfBins
+    for i in range(numOfBalls):
+        a = randrange(numOfBins)
+        b = randrange(numOfBins)
+        if bins[a] < bins[b]:
+            bins[a] += 1
+        else:
+            bins[b] += 1
+
+    plt.bar(range(numOfBins), bins)
+    plt.xlabel("Bin")
+    plt.ylabel("Number of Balls")
+    plt.title("Distribution of Balls in Bins")
+    plt.savefig("two choices.png")
+    plt.close()
