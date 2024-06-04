@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"math"
 	"math/rand/v2"
 )
 
@@ -14,18 +13,12 @@ func randomBinarySequence(n int) []int {
 	return result
 }
 
+// randomBinarySequenceDerandomized version of randomBinarySequence
+// that returns the same result for the same input
+// Derandomization was by optimizing the probability success
+// for each bit. Bellow is the optimized version of the function.
 func randomBinarySequenceDerandomized(n int) []int {
-	resultProb := 1.0 / float64(n)
-	result := make([]int, n)
-	for k := range n {
-		prob := 1.0 / math.Pow(2, float64(n-k-1))
-		if prob < resultProb {
-			result[k] = 0
-		} else {
-			result[k] = 1
-		}
-	}
-	return result
+	return make([]int, n)
 }
 
 func main() {

@@ -22,7 +22,6 @@ func vitterSequence(length int) []uint64 {
 }
 
 func main() {
-
 	sequence := vitterSequence(50)
 	fmt.Println(sequence)
 }
